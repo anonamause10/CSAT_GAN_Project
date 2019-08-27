@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from collections import Counter
-
+#yeet
 from keras.datasets import fashion_mnist
 from keras.layers import Input, Dense, Reshape, Flatten, Dropout
 from keras.layers import BatchNormalization
