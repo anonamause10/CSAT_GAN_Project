@@ -17,7 +17,8 @@ plt.switch_backend('agg')   # allows code to run without a system DISPLAY
 class GAN(object):
     """ Generative Adversarial Network class """
     def __init__(self, width=28, height=28, channels=1):
-
+        epoch = open("currepoch.txt","r+")
+        self.currepoch = epoch.read()
         self.width = width
         self.height = height
         self.channels = channels
@@ -39,20 +40,22 @@ class GAN(object):
 
     def __generator(self):
         """ Declare generator """
-
-        model = Sequential()
-        model.add(Dense(256, input_shape=(100,)))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(Dense(512))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(Dense(1024))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(Dense(self.width  * self.height * self.channels, activation='tanh'))
-        model.add(Reshape((self.width, self.height, self.channels)))
-
+        if(os.path.exists('pokegan.h5')):
+            model = keras.models.load_model('pokegan.h5')
+        else:
+            model = Sequential()
+            model.add(Dense(256, input_shape=(100,)))
+            model.add(LeakyReLU(alpha=0.2))
+            model.add(BatchNormalization(momentum=0.8))
+            model.add(Dense(512))
+            model.add(LeakyReLU(alpha=0.2))
+            model.add(BatchNormalization(momentum=0.8))
+            model.add(Dense(1024))
+            model.add(LeakyReLU(alpha=0.2))
+            model.add(BatchNormalization(momentum=0.8))
+            model.add(Dense(self.width  * self.height * self.channels,  activation='tanh'))
+            model.add(Reshape((self.width, self.height, self.channels)))
+        
         return model
 
     def __discriminator(self):
@@ -79,7 +82,8 @@ class GAN(object):
 
         return model
 
-    def train(self, X, epochs=10000, batch = 32, save_interval = 100):
+    def train(self, X, epochs=10, batch = 32, save_interval = 100):
+        
         train_datagen = ImageDataGenerator(rescale=1./255,)
         itr = train_generator = train_datagen.flow_from_directory('poke-images',
         target_size=(self.width,self.height),batch_size=batch, class_mode='sparse',color_mode='grayscale')
@@ -110,19 +114,25 @@ class GAN(object):
             noise = np.random.normal(0, 1, (batch, 100))
             y_mislabled = np.ones((batch, 1))
 
-            g_loss = self.stacked_generator_discriminator.train_on_batch(noise, y_mislabled)
+            model = self.stacked_generator_discriminator
+            g_loss = model.train_on_batch(noise, y_mislabled)
 
             print ('epoch: %d, [Discriminator :: d_loss: %f], [ Generator :: loss: %f]' % (cnt, d_loss[0], g_loss))
 
             if cnt % save_interval == 0:
                 self.plot_images(save2file=True, step=cnt)
+        epoch = open("currepoch.txt","r+")
+        epoch.write('\f'+str(self.currepoch+cnt))
+        self.G.save('pokegan.h5')
+
+        
 
 
     def plot_images(self, save2file=False, samples=16, step=0):
         ''' Plot and generated images '''
-        if not os.path.exists("./pokemans"):
-            os.makedirs("./pokemans")
-        filename = "./pokemans/mnist_%d.png" % step
+        if not os.path.exists("./newpokemans"):
+            os.makedirs("./newpokemans")
+        filename = "./newpokemans/mnist_%d.png" % step
         noise = np.random.normal(0, 1, (samples, 100))
 
         images = self.G.predict(noise)
