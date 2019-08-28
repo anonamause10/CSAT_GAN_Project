@@ -9,6 +9,7 @@ from keras.layers.advanced_activations import LeakyReLU
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.optimizers import Adam
+import keras
 
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')   # allows code to run without a system DISPLAY
@@ -16,9 +17,9 @@ plt.switch_backend('agg')   # allows code to run without a system DISPLAY
 
 class GAN(object):
     """ Generative Adversarial Network class """
-    def __init__(self, width=28, height=28, channels=1):
+    def __init__(self, width=28, height=28, channels=3):
         epoch = open("currepoch.txt","r+")
-        self.currepoch = epoch.read()
+        self.currepoch = float(epoch.read())
         self.width = width
         self.height = height
         self.channels = channels
@@ -42,6 +43,7 @@ class GAN(object):
         """ Declare generator """
         if(os.path.exists('pokegan.h5')):
             model = keras.models.load_model('pokegan.h5')
+            model.name = "generator"
         else:
             model = Sequential()
             model.add(Dense(256, input_shape=(100,)))
@@ -55,7 +57,8 @@ class GAN(object):
             model.add(BatchNormalization(momentum=0.8))
             model.add(Dense(self.width  * self.height * self.channels,  activation='tanh'))
             model.add(Reshape((self.width, self.height, self.channels)))
-        
+        print('generator')
+        model.summary()
         return model
 
     def __discriminator(self):
@@ -82,19 +85,19 @@ class GAN(object):
 
         return model
 
-    def train(self, X, epochs=10, batch = 32, save_interval = 100):
+    def train(self, X, epochs=500, batch = 32, save_interval = 100):
         
         train_datagen = ImageDataGenerator(rescale=1./255,)
-        itr = train_generator = train_datagen.flow_from_directory('poke-images',
-        target_size=(self.width,self.height),batch_size=batch, class_mode='sparse',color_mode='grayscale')
+        itr = train_generator = train_datagen.flow_from_directory('pokemon-images-dataset',
+        target_size=(self.width,self.height),batch_size=batch, class_mode='sparse',color_mode='rgb')
         for cnt in range(epochs+1):
             X_train ,y= itr.next()
             #X_train = X
             ## train discriminator
             if(len(X_train)<batch):
                 train_datagen = ImageDataGenerator(rescale=1./255,)
-                itr = train_generator = train_datagen.flow_from_directory('poke-images',
-                target_size=(self.width,self.height),batch_size=batch, class_mode='sparse',color_mode='grayscale')
+                itr = train_generator = train_datagen.flow_from_directory('pokemon-images-dataset',
+                target_size=(self.width,self.height),batch_size=batch, class_mode='sparse',color_mode='rgb')
                 X_train,y= itr.next()
             np.random.shuffle(X_train)
             random_index = np.random.randint(0, len(X_train) - np.int64(batch/2))
@@ -117,12 +120,14 @@ class GAN(object):
             model = self.stacked_generator_discriminator
             g_loss = model.train_on_batch(noise, y_mislabled)
 
-            print ('epoch: %d, [Discriminator :: d_loss: %f], [ Generator :: loss: %f]' % (cnt, d_loss[0], g_loss))
+            print ('epoch: %d, [Discriminator :: d_loss: %f], [ Generator :: loss: %f]' % (self.currepoch+cnt, d_loss[0], g_loss))
 
             if cnt % save_interval == 0:
-                self.plot_images(save2file=True, step=cnt)
+                self.plot_images(save2file=True, step=self.currepoch+cnt)
         epoch = open("currepoch.txt","r+")
-        epoch.write('\f'+str(self.currepoch+cnt))
+        s = str(self.currepoch+cnt)
+        print(type(s))
+        epoch.write("\f"+s)
         self.G.save('pokegan.h5')
 
         
@@ -142,8 +147,8 @@ class GAN(object):
         for i in range(images.shape[0]):
             plt.subplot(4, 4, i+1)
             image = images[i, :, :, :]
-            image = np.reshape(image, [self.height, self.width])
-            plt.imshow(image, cmap='gray')
+            image = np.reshape(image, [self.height, self.width,self.channels])
+            plt.imshow(image)
             plt.axis('off')
         plt.tight_layout()
 
