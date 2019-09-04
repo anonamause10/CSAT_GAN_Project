@@ -85,7 +85,7 @@ class GAN(object):
 
         return model
 
-    def train(self, X, epochs=20000, batch = 32, save_interval = 100):
+    def train(self, X, epochs=1000, batch = 32, save_interval = 100):
         
         train_datagen = ImageDataGenerator(rescale=1./255,)
         itr = train_generator = train_datagen.flow_from_directory('pokemon-images-dataset',
