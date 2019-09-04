@@ -18,7 +18,7 @@ plt.switch_backend('agg')   # allows code to run without a system DISPLAY
 class GAN(object):
     """ Generative Adversarial Network class """
     def __init__(self, width=28, height=28, channels=3):
-        epoch = open("currepoch.txt","r+")
+        epoch = open("mcurrepoch.txt","r+")
         self.currepoch = float(epoch.read())
         self.width = width
         self.height = height
@@ -85,10 +85,10 @@ class GAN(object):
 
         return model
 
-    def train(self, X, epochs=1000, batch = 32, save_interval = 100):
+    def train(self, X, epochs=100, batch = 32, save_interval = 100):
         
         train_datagen = ImageDataGenerator(rescale=1./255,)
-        itr = train_generator = train_datagen.flow_from_directory('pokemon-images-dataset',
+        itr = train_generator = train_datagen.flow_from_directory('lores-pokemon',
         target_size=(self.width,self.height),batch_size=batch, class_mode='sparse',color_mode='rgb')
         for cnt in range(epochs+1):
             X_train ,y= itr.next()
@@ -96,7 +96,7 @@ class GAN(object):
             ## train discriminator
             if(len(X_train)<batch):
                 train_datagen = ImageDataGenerator(rescale=1./255,)
-                itr = train_generator = train_datagen.flow_from_directory('pokemon-images-dataset',
+                itr = train_generator = train_datagen.flow_from_directory('lores-pokemon',
                 target_size=(self.width,self.height),batch_size=batch, class_mode='sparse',color_mode='rgb')
                 X_train,y= itr.next()
             np.random.shuffle(X_train)
@@ -124,20 +124,20 @@ class GAN(object):
 
             if cnt % save_interval == 0:
                 self.plot_images(save2file=True, step=self.currepoch+cnt)
-        epoch = open("currepoch.txt","r+")
+        epoch = open("mcurrepoch.txt","r+")
         s = str(self.currepoch+cnt)
         print(type(s))
         epoch.write("\f"+s)
-        self.G.save('pokegan.h5')
+        self.G.save('mpokegan.h5')
 
         
 
 
     def plot_images(self, save2file=False, samples=16, step=0):
         ''' Plot and generated images '''
-        if not os.path.exists("./newpokemans"):
-            os.makedirs("./newpokemans")
-        filename = "./newpokemans/mnist_%d.png" % step
+        if not os.path.exists("./mnewpokemans"):
+            os.makedirs("./mnewpokemans")
+        filename = "./mnewpokemans/mnist_%d.png" % step
         noise = np.random.normal(0, 1, (samples, 100))
 
         images = self.G.predict(noise)
