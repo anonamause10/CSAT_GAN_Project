@@ -41,8 +41,8 @@ class GAN(object):
 
     def __generator(self):
         """ Declare generator """
-        if(os.path.exists('pokegan.h5')):
-            model = keras.models.load_model('pokegan.h5')
+        if(os.path.exists('mpokegan.h5')):
+            model = keras.models.load_model('mpokegan.h5')
             model.name = "generator"
         else:
             model = Sequential()
