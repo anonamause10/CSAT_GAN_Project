@@ -11,11 +11,12 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 from IPython import display
 
-train_datagen = ImageDataGenerator(rescale=1./255,)
-itr = train_generator = train_datagen.flow_from_directory('lores-pokemon',
-target_size=(28,28),batch_size=32, class_mode='sparse',color_mode='rgb')
+(train_images, train_labels), (_, _) = tf.keras.datasets.mnist.load_data()
+train_images = train_images.reshape(train_images.shape[0], 28, 28, 1).astype('float32')
+train_images = (train_images - 127.5) / 127.5 # Normalize the images to [-1, 1]
 BUFFER_SIZE = 60000
 BATCH_SIZE = 256
+# Batch and shuffle the data
 # Batch and shuffle the data
 train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
 def make_generator_model():
@@ -38,6 +39,7 @@ def make_generator_model():
     model.add(layers.LeakyReLU())
 
     model.add(layers.Conv2DTranspose(1, (5, 5), strides=(2, 2), padding='same', use_bias=False, activation='tanh'))
+    print(model.output_shape)
     assert model.output_shape == (None, 28, 28, 1)
 
     return model
@@ -46,8 +48,9 @@ generator = make_generator_model()
 
 noise = tf.random.normal([1, 100])
 generated_image = generator(noise, training=False)
+print(generated_image)
 
-plt.imshow(generated_image[0, :, :, 0], cmap='gray')
+#plt.imshow(generated_image[0, :, :, 0], cmap='gray')
 
 def make_discriminator_model():
     model = tf.keras.Sequential()
@@ -125,7 +128,7 @@ def train(dataset, epochs):
     start = time.time()
 
     for image_batch in dataset:
-      train_step(train_it.next())
+      train_step(image_batch)
 
     # Produce images for the GIF as we go
     display.clear_output(wait=True)
