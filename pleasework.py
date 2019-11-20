@@ -56,10 +56,10 @@ if is_gan:
         w = img.shape[1]
         if w > h:
             offs = (w - h)/2
-            img = img[:,offs:offs+h,:]
+            img = img[:,int(offs):int(offs+h),:]
         elif h > w:
             offs = (h - w)/2
-            img = img[offs:offs+w,:,:]
+            img = img[int(offs):int(offs+w),:,:]
         img = cv2.resize(img, (img_h, img_w), interpolation = cv2.INTER_AREA)
         
         img = np.transpose(img, (2, 0, 1))
@@ -114,7 +114,7 @@ evecs = np.load(model_dir + 'evecs.npy')
 #Open a window
 pygame.init()
 pygame.font.init()
-screen = pygame.display.set_mode((window_w, window_h))
+screen = pygame.display.set_mode((window_w, int(window_h*1.5)))
 face_surface_mini = pygame.Surface((img_w, img_h))
 face_surface = screen.subsurface((drawing_x, drawing_y, drawing_w, drawing_h))
 pygame.display.set_caption('Pokemon Autoencoder')
@@ -164,9 +164,9 @@ def draw_sliders():
         
         cx_1 = x + slider_px
         cx_2 = x + slider_w - slider_px
-        for j in range(7):
-            ly = y + slider_h/2 + (j-3)*(slider_h/7)
-            pygame.draw.line(screen, slider_color, (cx_1, ly), (cx_2, ly))
+        #for j in range(7):
+        #    ly = y + slider_h/2 + (j-3)*(slider_h/7)
+        #    pygame.draw.line(screen, slider_color, (cx_1, ly), (cx_2, ly))
 
 def draw_face():
     pygame.surfarray.blit_array(face_surface_mini, np.transpose(cur_face, (2, 1, 0)))
